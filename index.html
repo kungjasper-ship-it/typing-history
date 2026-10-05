@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>英打遊戲開發歷程</title>
+<style>
+body{margin:0;min-height:100vh;background:#f6f7fb;color:#222;font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;padding:40px 20px;box-sizing:border-box}
+header{text-align:center;margin-bottom:34px}
+h1{margin:0 0 8px;font-size:2rem}
+header p{margin:0;color:#667}
+.grid{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #dde;border-radius:16px;padding:28px 22px;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(40,40,90,.12)}
+.card h2{margin:0 0 10px;font-size:1.4rem}
+.card p{margin:0;color:#556;line-height:1.7}
+.card.pending{opacity:.55;pointer-events:none}
+.card.soon{background:#f0f0f6;border-style:dashed}
+.tag{display:inline-block;margin-top:14px;font-size:.85rem;padding:3px 10px;border-radius:99px;background:#eef;color:#446}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>英打遊戲開發歷程</h1>
+  <p>從一個按鈕開始，一版一版長大</p>
+</header>
+<main class="grid">
+  <a class="card pending" id="v1" href="#" target="_blank" rel="noopener">
+    <h2>版本一</h2><p>標題與開始按鈕，畫面最簡單的起點。</p><span class="tag">尚未設定網址</span>
+  </a>
+  <a class="card pending" id="v2" href="#" target="_blank" rel="noopener">
+    <h2>版本二</h2><p>加入鍵盤圖片，按開始會響兩聲。</p><span class="tag">尚未設定網址</span>
+  </a>
+  <a class="card soon" href="coming-soon.html">
+    <h2>版本三</h2><p>即將推出，敬請期待。</p><span class="tag">Coming Soon</span>
+  </a>
+</main>
+<script>
+// 部署後，把自己的 GitHub Pages 網址貼進下面兩個引號中
+const V1_URL='https://kungjasper-ship-it.github.io/typing-v1/';
+const V2_URL='https://kungjasper-ship-it.github.io/typing-v2/';
+[['v1',V1_URL],['v2',V2_URL]].forEach(([id,url])=>{
+  if(!url)return;
+  const a=document.getElementById(id);
+  a.href=url;a.classList.remove('pending');a.querySelector('.tag').textContent='開啟網站';
+});
+</script>
+</body>
+</html>
