@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>英打遊戲版本四｜十鍵掉落字母</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:14px;background:#f6f7fb;color:#222;font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;padding:52px 16px 20px;box-sizing:border-box}
+h1{margin:0;font-size:1.7rem}
+.back{position:fixed;top:14px;left:18px;color:#335}
+.info{display:flex;gap:22px;font-size:1.1rem}
+.field{position:relative;width:min(560px,100%);height:320px;background:linear-gradient(#fff,#e8ebfa);border:1px solid #ccd;border-radius:14px;overflow:hidden}
+.field::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:#d62f4b}
+#drop{position:absolute;top:0;width:56px;height:56px;border-radius:50%;background:#ff5470;color:#fff;font-size:2rem;font-weight:800;display:none;align-items:center;justify-content:center;margin-left:-28px;box-shadow:0 0 16px rgba(255,84,112,.6)}
+#drop.pop{display:flex;background:#5ed49a;box-shadow:0 0 16px rgba(94,212,154,.8)}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.8;padding:20px;color:#445;font-size:1.1rem}
+.kb{display:flex;flex-direction:column;align-items:center;gap:5px;max-width:100%}
+.row{display:flex;gap:5px}
+.row:nth-child(2){margin-left:24px}.row:nth-child(3){margin-left:58px}
+.key{width:clamp(26px,6.6vw,46px);aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #ccd;border-radius:8px;font-weight:700;color:#556}
+.key.on{background:#ff5470;border-color:#d62f4b;color:#fff;box-shadow:0 0 12px rgba(255,84,112,.7)}
+.key.bad{background:#ffd166}
+.ctl{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px 22px}
+.ctl label{display:flex;align-items:center;gap:8px}
+input[type=range]{width:160px}
+button{font:inherit;font-size:1.05rem;padding:8px 22px;cursor:pointer}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← 回開發歷程</a>
+<h1>英打遊戲版本四：十鍵掉落字母</h1>
+<div class="info"><span>題數 <b id="qn">0</b>/10</span><span>答對 <b id="ok">0</b></span><span>落地 <b id="miss">0</b></span><span>目前速度 <b id="cs">8</b> 秒</span></div>
+<div class="field"><div id="drop"></div><div id="msg">按「開始」，字母會從上方掉下來。<br>請切換英文輸入，用實體鍵盤按對應的鍵。</div></div>
+<div class="kb" id="kb"></div>
+<div class="ctl">
+  <label>每個字母落地時間 <input type="range" id="sl" min="3" max="14" value="8"> <b id="sv">8</b> 秒</label>
+  <label><input type="checkbox" id="ac"> 漸進加速（每答對 3 題快 1 秒）</label>
+</div>
+<div class="ctl">
+  <button id="start">開始</button>
+  <button id="pause" disabled>暫停</button>
+</div>
+<script>
+const KEYS=['A','S','D','F','G','H','J','K','L',';'];
+const rows=['QWERTYUIOP','ASDFGHJKL;','ZXCVBNM'],kb=document.getElementById('kb'),kel={};
+rows.forEach(r=>{const d=document.createElement('div');d.className='row';
+  [...r].forEach(c=>{const k=document.createElement('div');k.className='key';k.textContent=c;kel[c]=k;d.appendChild(k)});kb.appendChild(d)});
+const $=id=>document.getElementById(id),drop=$('drop'),msg=$('msg'),field=document.querySelector('.field');
+let playing=false,paused=false,cur='',t=0,x=0,q=0,ok=0,miss=0,last=0,gap=0,raf=0;
+const base=()=>+$('sl').value;
+const dur=()=>$('ac').checked?Math.max(3,base()-Math.floor(ok/3)):base();
+function setInfo(){$('qn').textContent=q;$('ok').textContent=ok;$('miss').textContent=miss;$('cs').textContent=dur();$('sv').textContent=base()}
+function nextLetter(){
+  if(q>=10)return finish();
+  if(cur)kel[cur].classList.remove('on');
+  let c;do{c=KEYS[Math.random()*KEYS.length|0]}while(c===cur);
+  cur=c;q++;t=0;x=field.clientWidth*(.12+Math.random()*.76);
+  drop.textContent=c;drop.className='';drop.style.display='flex';drop.style.left=x+'px';drop.style.transform='translateY(0)';
+  kel[c].classList.add('on');setInfo()}
+function finish(){
+  playing=false;paused=false;cancelAnimationFrame(raf);
+  if(cur)kel[cur].classList.remove('on');cur='';drop.style.display='none';
+  msg.style.display='flex';msg.innerHTML='本回合結束！<br>答對 <b>'+ok+'</b> 題，落地 <b>'+miss+'</b> 題<br>按「重新開始」再玩一次';
+  $('start').textContent='重新開始';$('pause').disabled=true;$('pause').textContent='暫停'}
+function resolve(hit){
+  if(hit){ok++;drop.className='pop'}else miss++;
+  setInfo();gap=hit?.18:0;cur&&kel[cur].classList.remove('on');
+  const done=cur;cur='';
+  setTimeout(()=>{if(playing)nextLetter()},hit?180:0);cur='';}
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000||0);last=now;
+  if(playing&&!paused&&cur){
+    t+=dt;const h=field.clientHeight-56-6,p=Math.min(1,t/dur());
+    drop.style.transform='translateY('+(p*h)+'px)';
+    if(p>=1){resolve(false)}}
+  raf=requestAnimationFrame(loop)}
+function begin(){
+  q=0;ok=0;miss=0;cur='';playing=true;paused=false;msg.style.display='none';
+  $('start').textContent='重新開始';$('pause').disabled=false;$('pause').textContent='暫停';
+  $('start').blur();setInfo();nextLetter();cancelAnimationFrame(raf);last=performance.now();raf=requestAnimationFrame(loop)}
+function setPause(p){if(!playing)return;paused=p;$('pause').textContent=p?'繼續':'暫停';
+  if(p){msg.style.display='flex';msg.textContent='已暫停，按「繼續」回到遊戲'}else msg.style.display='none'}
+$('start').onclick=begin;
+$('pause').onclick=()=>{setPause(!paused);$('pause').blur()};
+$('sl').oninput=()=>{setInfo();setPause(true)};
+$('ac').onchange=()=>{setInfo();$('ac').blur()};
+addEventListener('blur',()=>setPause(true));
+addEventListener('keydown',e=>{
+  if(!playing||paused||!cur||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+  let c=null,m=/^Key([A-Z])$/.exec(e.code);
+  if(m)c=m[1];else if(e.code==='Semicolon')c=';';
+  if(!c)return;
+  if(c===cur)resolve(true);
+  else if(kel[c]){kel[c].classList.add('bad');setTimeout(()=>kel[c].classList.remove('bad'),150)}
+});
+setInfo();
+</script>
+</body>
+</html>
