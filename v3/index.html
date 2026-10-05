@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>英打遊戲版本三｜ASDF</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#f6f7fb;color:#222;font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;padding:20px;box-sizing:border-box}
+h1{margin:0;font-size:1.8rem}
+.back{position:fixed;top:14px;left:18px;color:#335}
+.score{font-size:1.2rem}
+#target{font-size:6rem;font-weight:800;line-height:1;min-height:1em;color:#d62f4b}
+#hint{margin:0;color:#667;min-height:1.4em}
+.kb{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:100%}
+.row{display:flex;gap:6px}
+.row:nth-child(2){margin-left:26px}.row:nth-child(3){margin-left:62px}
+.key{width:clamp(28px,7vw,52px);aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #ccd;border-radius:8px;font-weight:700;color:#556;transition:background .1s}
+.key.on{background:#ff5470;border-color:#d62f4b;color:#fff;box-shadow:0 0 14px rgba(255,84,112,.7)}
+.key.ok{background:#5ed49a}
+.key.bad{background:#ffd166}
+.btns{display:flex;gap:12px}
+button{font:inherit;font-size:1.1rem;padding:9px 26px;cursor:pointer}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← 回開發歷程</a>
+<h1>英打遊戲版本三：ASDF</h1>
+<div class="score">得分：<b id="score">0</b></div>
+<div id="target">?</div>
+<p id="hint">按「開始」，再按下亮起的字母（請切換英文輸入）</p>
+<div class="kb" id="kb"></div>
+<div class="btns">
+  <button id="start">開始</button>
+  <button id="stop" disabled>停止練習</button>
+</div>
+<script>
+const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'],kb=document.getElementById('kb'),keys={};
+rows.forEach(r=>{const d=document.createElement('div');d.className='row';
+  [...r].forEach(c=>{const k=document.createElement('div');k.className='key';k.textContent=c;keys[c]=k;d.appendChild(k)});kb.appendChild(d)});
+const POOL='ASDF',$=id=>document.getElementById(id);
+let playing=false,cur='',score=0;
+function next(){if(cur)keys[cur].classList.remove('on');
+  let c;do{c=POOL[Math.random()*4|0]}while(c===cur);cur=c;
+  keys[c].classList.add('on');$('target').textContent=c}
+function flash(c,cls){keys[c].classList.add(cls);setTimeout(()=>keys[c].classList.remove(cls),150)}
+function begin(){score=0;$('score').textContent=0;playing=true;cur='';next();
+  $('hint').textContent='按下亮起的字母';$('start').textContent='重新開始';$('stop').disabled=false;$('start').blur()}
+function end(){playing=false;if(cur)keys[cur].classList.remove('on');cur='';$('target').textContent='?';
+  $('hint').textContent='練習結束，最後得分 '+score+' 分';$('stop').disabled=true;$('stop').blur()}
+$('start').onclick=begin;$('stop').onclick=end;
+addEventListener('keydown',e=>{
+  if(!playing||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+  const m=/^Key([A-Z])$/.exec(e.code);if(!m)return;
+  if(m[1]===cur){flash(cur,'ok');score++;$('score').textContent=score;next()}
+  else flash(m[1],'bad');
+});
+</script>
+</body>
+</html>
