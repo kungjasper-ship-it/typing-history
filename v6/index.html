@@ -44,6 +44,7 @@ button:focus-visible{outline:3px solid #ffd166;outline-offset:3px}
 #vn.kb{background:rgba(10,6,24,.92)}#vn.kb #npc{height:40vh;bottom:30vh;left:15%}#vn.kb #bub{top:6vh;left:calc(15% + 21vh);max-width:min(58vw,560px)}
 @media(max-aspect-ratio:1/1){#kbd{--ks:clamp(24px,8.2vw,48px)}#vn.kb #npc{height:27vh;bottom:36vh;left:24%}#vn.kb #bub{top:5vh;left:4vw;right:4vw;max-width:none}}
 #tt{position:fixed;inset:0;z-index:6;background:rgba(10,6,24,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}#tw{font-size:clamp(40px,9vw,92px);font-weight:800;letter-spacing:.12em;color:#8f86b8}#tw b{color:#ffd166}#tm{color:#e1d6ff;font-size:16px;text-align:center;max-width:90vw}#ts{font-size:22px;font-weight:800;color:#ff6fb5}#tkb{--ks:clamp(24px,8.2vw,48px);display:flex;flex-direction:column;gap:5px;margin-top:10px}#tx{position:absolute;top:14px;right:16px;background:rgba(14,6,36,.7);color:#e1d6ff;border:1px solid rgba(255,110,190,.5);border-radius:99px;padding:6px 16px;font-weight:700;cursor:pointer}
+.panel #sec{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px}.panel button.sec{font:700 15px inherit;font-family:inherit;background:transparent;color:#e1d6ff;border:1px solid rgba(255,110,190,.6);border-radius:99px;padding:8px 20px;cursor:pointer}.panel button.sec:hover{background:#ff6fb5;color:#0a0618}
 .hide{display:none!important}
 </style>
 </head>
@@ -75,7 +76,7 @@ button:focus-visible{outline:3px solid #ffd166;outline-offset:3px}
 <div id="bub"><div id="nm">小節　音符精靈</div><div id="vtxt"></div><div id="ch"></div><div id="hint">點擊或按 Enter 繼續</div></div>
 <div id="kbd" class="hide"></div><button id="skip">略過 ▸</button></div>
 <div id="tt" class="hide"><button id="tx">離開</button><div id="tw"></div><div id="tm"></div><div id="ts"></div><div id="tkb"></div></div>
-<div class="panel" id="pn"><h1 id="pt"></h1><p id="ps"></p><div id="df"></div><button id="pbtn"></button><small id="ph"></small></div>
+<div class="panel" id="pn"><h1 id="pt"></h1><p id="ps"></p><div id="df"></div><button id="pbtn"></button><div id="sec" class="hide"><button class="sec" id="pb2">重新開始這一場</button><button class="sec" id="pb3">回到主選單</button></div><small id="ph"></small></div>
 <script>
 const MOBILE=true;
 const $=id=>document.getElementById(id),cv=$('c'),g=cv.getContext('2d');
@@ -137,11 +138,11 @@ function dfui(on){const d=$('df');d.classList.toggle('hide',!on);d.innerHTML='';
  const row=(items,cur,cb,cls)=>{const r=document.createElement('div');r.className='row '+cls;items.forEach(([k,l,t])=>{const b=document.createElement('button');b.textContent=l;b.title=t||'';b.className=k===cur?'on':'';b.onclick=()=>{cb(k);dfui(true)};r.appendChild(b)});d.appendChild(r)};
  row(Object.keys(D).map(k=>[k,D[k].n]),DK,k=>DK=k,'');row(STG.map((q,i)=>[i,String(i+1),q.name]),SEL,k=>SEL=k,'sm');
  const i=document.createElement('div');i.className='info';i.textContent='從第 '+(SEL+1)+' 場開始：'+STG[SEL].name+'　字母 '+STG[SEL].set;d.appendChild(i);const tl=document.createElement('div');tl.className='row sm';const b1=document.createElement('button');b1.textContent='手位教學';b1.onclick=()=>scene(mkLesson(),()=>menuShow());const b2=document.createElement('button');b2.textContent='場前手位提示：'+(TIPS?'開':'關');b2.onclick=()=>{TIPS=!TIPS;lsSet('ls_tips',TIPS?'1':'0');dfui(true)};const mkb=(t,f)=>{const b=document.createElement('button');b.textContent=t;b.onclick=f;return b};tl.append(b1,b2,mkb('重看劇情',()=>storyStart()),mkb('打字測驗',()=>startTest()),mkb('清除紀錄',()=>{if(confirm('確定清除所有進度與紀錄？')){['ls_ach','ls_best','ls_weak','ls_prog','ls_tests','ls_seen','ls_tips'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});location.reload()}}));d.appendChild(tl)}
-function show(t,p,b,h='',df=false){if(pendingLines){const L=pendingLines,a=[t,p,b,h,df];pendingLines=null;scene(L,()=>show(...a));return}$('pt').textContent=t;$('ps').innerHTML=p;$('pbtn').textContent=b;$('ph').textContent=h;dfui(df);$('pn').classList.remove('hide')}
+function show(t,p,b,h='',df=false){if(pendingLines){const L=pendingLines,a=[t,p,b,h,df];pendingLines=null;scene(L,()=>show(...a));return}$('sec').classList.add('hide');$('pt').textContent=t;$('ps').innerHTML=p;$('pbtn').textContent=b;$('ph').textContent=h;dfui(df);$('pn').classList.remove('hide')}
 const hide=()=>$('pn').classList.add('hide'),HINT=MOBILE?'':'Enter 或空白鍵';
 function words(st){const sc=w=>[...w[0]].reduce((a,c)=>a+(WEAK[c]||0),0)+Math.random()*3;return st.words.slice().sort((a,b)=>sc(b)-sc(a))}
 function newGame(){reset();S.mode='play';startStage(SEL)}
-function startStage0(i){ac();const st=STG[i],df=dd(),es=30/st.bpm;S.si=i;S.st=st;S.ln=mkLn(st);geo();S.pf=df.pf;S.gr=df.gr;S.ap=st.ap*df.ap;S.t0=clk()+1.6;S.nextE=0;S.N=[];S.W=[];S.pad=[];S.held=[];S.cnt={p:0,g:0,m:0};S.combo=0;S.maxc=0;S.fv=0;S.fT=0;S.fevUsed=0;S.wd=null;
+function startStage0(i){ac();S.hp0=S.hp;S.sc0=S.score;const st=STG[i],df=dd(),es=30/st.bpm;S.si=i;S.st=st;S.ln=mkLn(st);geo();S.pf=df.pf;S.gr=df.gr;S.ap=st.ap*df.ap;S.t0=clk()+1.6;S.nextE=0;S.N=[];S.W=[];S.pad=[];S.held=[];S.cnt={p:0,g:0,m:0};S.combo=0;S.maxc=0;S.fv=0;S.fT=0;S.fevUsed=0;S.wd=null;
  const pool=words(st),lim=BARS*8-12;let e=16,wi=0,id=0,lastL=-1;
  while(true){const [w,m]=pool[wi++%pool.length],len=w.length;if(e+df.sp*(len-1)>lim)break;
   [...w].forEach((c,k)=>S.N.push({t:S.t0+(e+k*df.sp)*es,lane:LI(c),ch:c,done:0,w:id,last:k===len-1,hold:0,res:0}));
@@ -189,9 +190,11 @@ function clearStage(){S.mode='clear';S.lock=.9;S.fw=0;S.rk=0;S.score+=200*(S.si+
  else show('第 '+(S.si+1)+' 場完成！',r+'<br>下一場：「'+STG[S.si+1].name+'」<br>本場字母：'+STG[S.si+1].set,'下一場',HINT)}
 function over(){S.mode='over';S.lock=.9;S.held=[];save();tone(196,clk(),.5,'sawtooth',.08);tone(147,clk()+.25,.6,'sawtooth',.08);
  pendingLines=advice('over',Object.entries(WEAK).sort((a,b)=>b[1]-a[1]).slice(0,3).filter(e=>e[1]>1).map(e=>e[0]),false);show('演出中斷','生命值歸零了<br>第 '+(S.si+1)+' 場 · 總分 '+S.score+' · 最高分 '+BEST,'再試一次',HINT,true)}
-function pause(){if(S.mode!=='play')return;S.mode='pause';AC&&AC.suspend();show('暫停','舞台燈光先暗下來','繼續',MOBILE?'':'Esc 或 Enter 繼續')}
+function pause(){if(S.mode!=='play')return;S.mode='pause';AC&&AC.suspend();show('暫停','舞台燈光先暗下來','繼續',MOBILE?'':'Esc 或 Enter 繼續');$('sec').classList.remove('hide')}
 function act(){ac();$('pbtn').blur();if(S.lock>0)return;if(S.mode==='tdone'){S.mode='menu';menuShow();return}if(S.mode==='pause'){S.mode='play';AC.resume();hide()}else if(S.mode==='clear')startStage(S.si+1);else newGame()}
-$('pbtn').onclick=act;$('mu').onclick=e=>{mute=!mute;if(MG)MG.gain.value=mute?0:.9;e.target.textContent=mute?'🔇':'🔊';e.target.blur()};
+$('pbtn').onclick=act;
+$('pb3').onclick=()=>{if(S.mode!=='pause')return;if(AC)AC.resume();save();reset();S.mode='menu';menuShow()};
+$('pb2').onclick=()=>{if(S.mode!=='pause')return;if(AC)AC.resume();const i=S.si;S.N=[];S.held=[];P=[];R=[];S.hp=S.hp0;S.score=S.sc0;startStage0(i)};$('mu').onclick=e=>{mute=!mute;if(MG)MG.gain.value=mute?0:.9;e.target.textContent=mute?'🔇':'🔊';e.target.blur()};
 addEventListener('blur',pause);addEventListener('resize',rs);
 
 const SCRIPT=[
